@@ -47,6 +47,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Music-specific colors
+        "audio-wave": "hsl(var(--audio-wave))",
+        "lyric-highlight": "hsl(var(--lyric-highlight))",
+        "timeline-bg": "hsl(var(--timeline-bg))",
+        "timeline-track": "hsl(var(--timeline-track))",
+        "player-bg": "hsl(var(--player-bg))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -56,6 +62,18 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // Music-specific design tokens
+        backgroundImage: {
+          "music-gradient": "var(--music-gradient)",
+        },
+        boxShadow: {
+          "glow": "var(--shadow-glow)",
+          "player": "var(--shadow-player)",
+        },
+        transitionTimingFunction: {
+          "smooth": "var(--transition-smooth)",
+          "bounce": "var(--transition-bounce)",
         },
       },
       borderRadius: {

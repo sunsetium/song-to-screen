@@ -1,11 +1,101 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useState, useCallback } from "react";
+import { AudioUploader } from "@/components/AudioUploader";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { LyricsEditor, LyricLine } from "@/components/LyricsEditor";
+import { LyricsPreview } from "@/components/LyricsPreview";
+import { toast } from "sonner";
 
 const Index = () => {
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [lyrics, setLyrics] = useState<LyricLine[]>([]);
+
+  const handleFileSelect = useCallback((file: File) => {
+    setAudioFile(file);
+    setCurrentTime(0);
+    toast.success(`Loaded: ${file.name}`);
+  }, []);
+
+  const handleTimeUpdate = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
+  const handleSeek = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
+  const handleLyricsChange = useCallback((newLyrics: LyricLine[]) => {
+    setLyrics(newLyrics);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold music-gradient bg-clip-text text-transparent mb-4">
+            Karaoke Video Creator
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Transform your MP3 files into synchronized karaoke videos
+          </p>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Left Column - Upload & Controls */}
+          <div className="space-y-6">
+            {!audioFile ? (
+              <AudioUploader
+                onFileSelect={handleFileSelect}
+                selectedFile={audioFile}
+              />
+            ) : (
+              <div className="space-y-6">
+                <AudioUploader
+                  onFileSelect={handleFileSelect}
+                  selectedFile={audioFile}
+                />
+                <AudioPlayer
+                  audioFile={audioFile}
+                  currentTime={currentTime}
+                  onTimeUpdate={handleTimeUpdate}
+                  onSeek={handleSeek}
+                />
+              </div>
+            )}
+
+            {audioFile && (
+              <LyricsEditor
+                lyrics={lyrics}
+                onLyricsChange={handleLyricsChange}
+                currentTime={currentTime}
+              />
+            )}
+          </div>
+
+          {/* Right Column - Preview */}
+          <div className="lg:sticky lg:top-8 lg:h-fit">
+            <LyricsPreview
+              lyrics={lyrics}
+              currentTime={currentTime}
+              audioFile={audioFile}
+            />
+          </div>
+        </div>
+
+        {/* Export Section - Coming Soon */}
+        {audioFile && lyrics.length > 0 && (
+          <div className="text-center p-8 border border-dashed border-primary/30 rounded-lg bg-card/30">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Export Video</h3>
+            <p className="text-muted-foreground mb-4">
+              Video export functionality coming soon! For now, you can preview your karaoke video above.
+            </p>
+            <div className="text-sm text-muted-foreground">
+              Features in development: MP4 export, custom backgrounds, text styling options
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
