@@ -9,6 +9,7 @@ interface AudioPlayerProps {
   currentTime: number;
   onTimeUpdate: (time: number) => void;
   onSeek: (time: number) => void;
+  autoPlay?: boolean;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -16,6 +17,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   currentTime,
   onTimeUpdate,
   onSeek,
+  autoPlay = false,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,6 +31,32 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       return () => URL.revokeObjectURL(url);
     }
   }, [audioFile]);
+
+  // Auto-play when audio is loaded
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio && audioUrl && autoPlay) {
+      const handleCanPlay = () => {
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.then(() => {
+            setIsPlaying(true);
+          }).catch(error => {
+            console.error("Auto-play failed:", error);
+            // Auto-play was prevented, but that's okay
+          });
+        }
+      };
+      
+      if (audio.readyState >= 3) {
+        // Audio is already loaded enough to play
+        handleCanPlay();
+      } else {
+        audio.addEventListener("canplay", handleCanPlay);
+        return () => audio.removeEventListener("canplay", handleCanPlay);
+      }
+    }
+  }, [audioUrl, autoPlay]);
 
   useEffect(() => {
     const audio = audioRef.current;

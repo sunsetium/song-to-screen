@@ -9,6 +9,8 @@ const Index = () => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
+  const [isGeneratingLyrics, setIsGeneratingLyrics] = useState(false);
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
 
   const handleFileSelect = useCallback((file: File) => {
     setAudioFile(file);
@@ -18,7 +20,11 @@ const Index = () => {
 
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
-  }, []);
+    // Mark auto-play as used once playback starts
+    if (time > 0 && !hasAutoPlayed) {
+      setHasAutoPlayed(true);
+    }
+  }, [hasAutoPlayed]);
 
   const handleSeek = useCallback((time: number) => {
     setCurrentTime(time);
@@ -26,6 +32,22 @@ const Index = () => {
 
   const handleLyricsChange = useCallback((newLyrics: LyricLine[]) => {
     setLyrics(newLyrics);
+  }, []);
+
+  const handleLyricsGenerated = useCallback((generatedLyrics: LyricLine[]) => {
+    setLyrics(generatedLyrics);
+    setIsGeneratingLyrics(false);
+    // Enable auto-play once lyrics are ready
+    setTimeout(() => {
+      setHasAutoPlayed(false);
+    }, 500);
+  }, []);
+
+  const handleFileSelectWithLyrics = useCallback((file: File) => {
+    setAudioFile(file);
+    setCurrentTime(0);
+    setIsGeneratingLyrics(true);
+    toast.success(`Loaded: ${file.name}`);
   }, []);
 
   return (
@@ -47,20 +69,25 @@ const Index = () => {
           <div className="space-y-6">
             {!audioFile ? (
               <AudioUploader
-                onFileSelect={handleFileSelect}
+                onFileSelect={handleFileSelectWithLyrics}
                 selectedFile={audioFile}
+                onLyricsGenerated={handleLyricsGenerated}
+                isGeneratingLyrics={isGeneratingLyrics}
               />
             ) : (
               <div className="space-y-6">
                 <AudioUploader
-                  onFileSelect={handleFileSelect}
+                  onFileSelect={handleFileSelectWithLyrics}
                   selectedFile={audioFile}
+                  onLyricsGenerated={handleLyricsGenerated}
+                  isGeneratingLyrics={isGeneratingLyrics}
                 />
                 <AudioPlayer
                   audioFile={audioFile}
                   currentTime={currentTime}
                   onTimeUpdate={handleTimeUpdate}
                   onSeek={handleSeek}
+                  autoPlay={lyrics.length > 0 && !hasAutoPlayed && !isGeneratingLyrics}
                 />
               </div>
             )}
