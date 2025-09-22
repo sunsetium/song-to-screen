@@ -27,11 +27,11 @@ export const LyricsPreview: React.FC<LyricsPreviewProps> = ({
     );
     
     if (currentIndex === -1) {
-      // No current lyric, find the next one
-      const nextIndex = sortedLyrics.findIndex(
+      // No current lyric, find all upcoming lyrics
+      const upcomingLyrics = sortedLyrics.filter(
         (line) => line.startTime > currentTime
       );
-      return nextIndex !== -1 ? sortedLyrics.slice(nextIndex, nextIndex + 3) : [];
+      return upcomingLyrics.slice(0, 3);
     }
     
     // Return next 2-3 lyrics
@@ -44,15 +44,11 @@ export const LyricsPreview: React.FC<LyricsPreviewProps> = ({
     );
     
     if (currentIndex === -1) {
-      // No current lyric, find the previous ones
-      let prevIndex = -1;
-      for (let i = sortedLyrics.length - 1; i >= 0; i--) {
-        if (sortedLyrics[i].endTime < currentTime) {
-          prevIndex = i;
-          break;
-        }
-      }
-      return prevIndex !== -1 ? sortedLyrics.slice(Math.max(0, prevIndex - 2), prevIndex + 1) : [];
+      // No current lyric, find all previous lyrics
+      const previousLyrics = sortedLyrics.filter(
+        (line) => line.endTime < currentTime
+      );
+      return previousLyrics.slice(-3); // Last 3 previous lyrics
     }
     
     // Return previous 2-3 lyrics

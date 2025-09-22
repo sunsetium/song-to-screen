@@ -3,6 +3,7 @@ import { AudioUploader } from "@/components/AudioUploader";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { LyricsEditor, LyricLine } from "@/components/LyricsEditor";
 import { LyricsPreview } from "@/components/LyricsPreview";
+import { ExportSection } from "@/components/ExportSection";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -111,17 +112,12 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Export Section - Coming Soon */}
+        {/* Export Section */}
         {audioFile && lyrics.length > 0 && (
-          <div className="text-center p-8 border border-dashed border-primary/30 rounded-lg bg-card/30">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Export Video</h3>
-            <p className="text-muted-foreground mb-4">
-              Video export functionality coming soon! For now, you can preview your karaoke video above.
-            </p>
-            <div className="text-sm text-muted-foreground">
-              Features in development: MP4 export, custom backgrounds, text styling options
-            </div>
-          </div>
+          <ExportSection
+            audioFile={audioFile}
+            lyrics={lyrics}
+          />
         )}
       </div>
     </div>
