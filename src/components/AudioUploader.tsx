@@ -31,7 +31,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         if (onLyricsGenerated) {
           try {
             toast.info("Generating lyrics from audio...");
-            const lyrics = await lyricsGenerator.generateLyrics(file);
+            const lyrics = await lyricsGenerator.generateLyrics(file, true);
             onLyricsGenerated(lyrics);
             toast.success("Lyrics generated successfully!");
           } catch (error) {

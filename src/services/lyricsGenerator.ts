@@ -1,5 +1,7 @@
 import { pipeline } from "@huggingface/transformers";
-import { LyricLine } from "@/components/LyricsEditor";
+import { LyricLine, LyricWord } from "@/components/LyricsEditor";
+
+export type { LyricLine, LyricWord };
 
 export class LyricsGenerator {
   private transcriber: any = null;
@@ -25,14 +27,14 @@ export class LyricsGenerator {
     this.isLoading = false;
   }
 
-  async generateLyrics(audioFile: File): Promise<LyricLine[]> {
+  async generateLyrics(audioFile: File, wordLevel: boolean = true): Promise<LyricLine[]> {
     await this.initialize();
     
     const audioUrl = URL.createObjectURL(audioFile);
     
     try {
       const result = await this.transcriber(audioUrl, {
-        return_timestamps: true,
+        return_timestamps: wordLevel ? "word" : "segment",
         chunk_length_s: 10,
       });
       
@@ -42,13 +44,52 @@ export class LyricsGenerator {
       const lyrics: LyricLine[] = [];
       
       if (result.chunks && Array.isArray(result.chunks)) {
+        // Group words into lines for better readability
+        let currentLine = "";
+        let currentWords: LyricWord[] = [];
+        let lineStartTime = 0;
+        let lineIndex = 0;
+
         result.chunks.forEach((chunk: any, index: number) => {
-          lyrics.push({
-            id: `auto-${index}`,
-            text: chunk.text.trim(),
-            startTime: chunk.timestamp[0] || 0,
-            endTime: chunk.timestamp[1] || (chunk.timestamp[0] + 3),
-          });
+          if (chunk.text && chunk.timestamp) {
+            const word = chunk.text.trim();
+            const wordStartTime = chunk.timestamp[0] || 0;
+            const wordEndTime = chunk.timestamp[1] || wordStartTime + 0.5;
+
+            if (wordLevel) {
+              currentWords.push({
+                word,
+                startTime: wordStartTime,
+                endTime: wordEndTime
+              });
+            }
+
+            // Start new line every 8-12 words or at punctuation
+            if (currentLine === "") {
+              lineStartTime = wordStartTime;
+            }
+            
+            currentLine += (currentLine ? " " : "") + word;
+            
+            const shouldEndLine = 
+              currentWords.length >= 8 || 
+              word.match(/[.!?]/) || 
+              (index === result.chunks.length - 1);
+
+            if (shouldEndLine && currentLine.trim()) {
+              lyrics.push({
+                id: `auto-${lineIndex}`,
+                text: currentLine.trim(),
+                startTime: lineStartTime,
+                endTime: wordEndTime,
+                words: wordLevel ? [...currentWords] : undefined,
+              });
+              
+              currentLine = "";
+              currentWords = [];
+              lineIndex++;
+            }
+          }
         });
       } else {
         // Fallback: split text into estimated chunks
@@ -64,11 +105,19 @@ export class LyricsGenerator {
           const chunkWords = words.slice(i, i + chunkSize);
           const duration = chunkWords.length / wordsPerSecond;
           
+          const lineWords: LyricWord[] = wordLevel ? 
+            chunkWords.map((word, wordIndex) => ({
+              word,
+              startTime: currentTime + (wordIndex * duration / chunkWords.length),
+              endTime: currentTime + ((wordIndex + 1) * duration / chunkWords.length)
+            })) : undefined;
+          
           lyrics.push({
             id: `auto-${i / chunkSize}`,
             text: chunkWords.join(" "),
             startTime: currentTime,
             endTime: currentTime + duration,
+            words: lineWords,
           });
           
           currentTime += duration;
@@ -81,4 +130,42 @@ export class LyricsGenerator {
       throw new Error("Failed to generate lyrics from audio");
     }
   }
+}
+
+export function exportLyricsAsLRC(lyrics: LyricLine[]): string {
+  let lrc = "";
+  lrc += "[ar:Karaoke Creator]\n";
+  lrc += "[ti:Generated Lyrics]\n";
+  lrc += "[al:Auto-Generated]\n";
+  lrc += "[by:Karaoke Creator]\n\n";
+  
+  lyrics.forEach(line => {
+    const minutes = Math.floor(line.startTime / 60);
+    const seconds = (line.startTime % 60).toFixed(2);
+    const timestamp = `[${minutes.toString().padStart(2, '0')}:${seconds.padStart(5, '0')}]`;
+    lrc += `${timestamp}${line.text}\n`;
+  });
+  
+  return lrc;
+}
+
+export function exportLyricsAsJSON(lyrics: LyricLine[]): string {
+  const exportData = {
+    version: "1.0",
+    metadata: {
+      title: "Generated Lyrics",
+      artist: "Unknown",
+      generator: "Karaoke Creator",
+      createdAt: new Date().toISOString()
+    },
+    lyrics: lyrics.map(line => ({
+      id: line.id,
+      text: line.text,
+      startTime: line.startTime,
+      endTime: line.endTime,
+      words: line.words || []
+    }))
+  };
+  
+  return JSON.stringify(exportData, null, 2);
 }

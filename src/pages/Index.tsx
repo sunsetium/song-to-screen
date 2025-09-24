@@ -4,6 +4,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { LyricsEditor, LyricLine } from "@/components/LyricsEditor";
 import { LyricsPreview } from "@/components/LyricsPreview";
 import { ExportSection } from "@/components/ExportSection";
+import { MetadataExport } from "@/components/MetadataExport";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -114,10 +115,16 @@ const Index = () => {
 
         {/* Export Section */}
         {audioFile && lyrics.length > 0 && (
-          <ExportSection
-            audioFile={audioFile}
-            lyrics={lyrics}
-          />
+          <div className="space-y-8">
+            <MetadataExport
+              lyrics={lyrics}
+              audioFileName={audioFile.name}
+            />
+            <ExportSection
+              audioFile={audioFile}
+              lyrics={lyrics}
+            />
+          </div>
         )}
       </div>
     </div>

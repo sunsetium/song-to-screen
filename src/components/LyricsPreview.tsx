@@ -1,123 +1,118 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { LyricLine } from "./LyricsEditor";
+import { LyricLine } from "@/components/LyricsEditor";
+import { Music } from "lucide-react";
 
 interface LyricsPreviewProps {
   lyrics: LyricLine[];
   currentTime: number;
   audioFile: File | null;
+  karaokeMode?: boolean;
 }
 
 export const LyricsPreview: React.FC<LyricsPreviewProps> = ({
   lyrics,
   currentTime,
   audioFile,
+  karaokeMode = true,
 }) => {
-  const sortedLyrics = [...lyrics].sort((a, b) => a.startTime - b.startTime);
+  const activeLyrics = lyrics.filter(lyric => 
+    currentTime >= lyric.startTime && currentTime <= lyric.endTime
+  );
+
+  // Show current line and next 2-3 lines
+  const currentLineIndex = lyrics.findIndex(lyric => 
+    currentTime >= lyric.startTime && currentTime <= lyric.endTime
+  );
   
-  const getCurrentLyric = () => {
-    return sortedLyrics.find(
-      (line) => currentTime >= line.startTime && currentTime <= line.endTime
-    );
-  };
+  const visibleLines = lyrics.slice(
+    Math.max(0, currentLineIndex), 
+    currentLineIndex + 3
+  );
 
-  const getUpcomingLyrics = () => {
-    const currentIndex = sortedLyrics.findIndex(
-      (line) => currentTime >= line.startTime && currentTime <= line.endTime
-    );
-    
-    if (currentIndex === -1) {
-      // No current lyric, find all upcoming lyrics
-      const upcomingLyrics = sortedLyrics.filter(
-        (line) => line.startTime > currentTime
-      );
-      return upcomingLyrics.slice(0, 3);
+  const renderWordByWord = (lyric: LyricLine) => {
+    if (!karaokeMode || !lyric.words) {
+      return <span>{lyric.text}</span>;
     }
-    
-    // Return next 2-3 lyrics
-    return sortedLyrics.slice(currentIndex + 1, currentIndex + 4);
-  };
 
-  const getPreviousLyrics = () => {
-    const currentIndex = sortedLyrics.findIndex(
-      (line) => currentTime >= line.startTime && currentTime <= line.endTime
-    );
-    
-    if (currentIndex === -1) {
-      // No current lyric, find all previous lyrics
-      const previousLyrics = sortedLyrics.filter(
-        (line) => line.endTime < currentTime
-      );
-      return previousLyrics.slice(-3); // Last 3 previous lyrics
-    }
-    
-    // Return previous 2-3 lyrics
-    return sortedLyrics.slice(Math.max(0, currentIndex - 3), currentIndex);
-  };
-
-  const currentLyric = getCurrentLyric();
-  const upcomingLyrics = getUpcomingLyrics();
-  const previousLyrics = getPreviousLyrics();
-
-  if (!audioFile) {
     return (
-      <Card className="p-8 bg-timeline-bg border-border/30">
-        <div className="text-center text-muted-foreground">
-          <h3 className="text-xl font-semibold mb-2">Karaoke Preview</h3>
-          <p>Upload an audio file to start creating your karaoke video</p>
-        </div>
-      </Card>
+      <span>
+        {lyric.words.map((word, index) => {
+          const isWordActive = currentTime >= word.startTime && currentTime <= word.endTime;
+          return (
+            <span
+              key={index}
+              className={`transition-all duration-200 ${
+                isWordActive 
+                  ? "text-primary-glow font-bold scale-105" 
+                  : "text-inherit"
+              }`}
+              style={{
+                display: 'inline-block',
+                marginRight: '0.25rem'
+              }}
+            >
+              {word.word}
+            </span>
+          );
+        })}
+      </span>
     );
-  }
+  };
 
   return (
-    <Card className="p-8 bg-timeline-bg border-border/30 min-h-[400px] flex flex-col justify-center">
-      <div className="text-center space-y-6">
-        <h3 className="text-sm font-medium text-muted-foreground mb-8">KARAOKE PREVIEW</h3>
+    <Card className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 min-h-[400px]">
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Music className="w-6 h-6 text-primary" />
+          <h3 className="text-2xl font-semibold text-foreground">
+            {karaokeMode ? "Karaoke Preview" : "Lyrics Preview"}
+          </h3>
+        </div>
         
-        {/* Previous lyrics - faded */}
-        <div className="space-y-2 min-h-[60px] flex flex-col justify-end">
-          {previousLyrics.slice(-2).map((line) => (
-            <div
-              key={line.id}
-              className="text-lg text-muted-foreground/60 opacity-60 transition-all duration-300"
-            >
-              {line.text}
-            </div>
-          ))}
-        </div>
-
-        {/* Current lyric - highlighted */}
-        <div className="min-h-[80px] flex items-center justify-center">
-          {currentLyric ? (
-            <div className="text-4xl font-bold text-center lyric-text music-gradient bg-clip-text text-transparent animate-pulse">
-              {currentLyric.text}
-            </div>
-          ) : (
-            <div className="text-2xl text-muted-foreground/40">
-              {lyrics.length === 0 ? "Add some lyrics to get started!" : "♪"}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming lyrics - preview */}
-        <div className="space-y-2 min-h-[60px] flex flex-col justify-start">
-          {upcomingLyrics.slice(0, 2).map((line) => (
-            <div
-              key={line.id}
-              className="text-lg text-muted-foreground/80 transition-all duration-300"
-            >
-              {line.text}
-            </div>
-          ))}
-        </div>
+        {audioFile ? (
+          <p className="text-muted-foreground">
+            Now playing: <span className="font-medium text-foreground">{audioFile.name}</span>
+          </p>
+        ) : (
+          <p className="text-muted-foreground">Upload an MP3 to see lyrics preview</p>
+        )}
       </div>
-      
-      {lyrics.length > 0 && (
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          {sortedLyrics.length} lyric lines • {currentTime.toFixed(1)}s
-        </div>
-      )}
+
+      <div className="space-y-6 min-h-[200px] flex flex-col justify-center">
+        {lyrics.length === 0 ? (
+          <div className="text-center py-12">
+            <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground text-lg">
+              {audioFile ? "Generating lyrics..." : "Upload an audio file to get started"}
+            </p>
+          </div>
+        ) : (
+          <div className="text-center space-y-4">
+            {visibleLines.map((lyric) => {
+              const isActive = activeLyrics.some(active => active.id === lyric.id);
+              return (
+                <div
+                  key={lyric.id}
+                  className={`text-xl font-medium transition-all duration-300 px-4 py-2 rounded-lg ${
+                    isActive
+                      ? "text-primary scale-110 bg-primary/10 shadow-lg"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {renderWordByWord(lyric)}
+                </div>
+              );
+            })}
+            
+            {visibleLines.length === 0 && (
+              <div className="text-muted-foreground text-lg py-8">
+                ♪ Music playing ♪
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 };
