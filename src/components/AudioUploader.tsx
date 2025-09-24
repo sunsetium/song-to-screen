@@ -30,13 +30,22 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         // Auto-generate lyrics
         if (onLyricsGenerated) {
           try {
-            toast.info("Generating lyrics from audio...");
+            toast.info("Generating lyrics from audio... This may take a moment.");
             const lyrics = await lyricsGenerator.generateLyrics(file, true);
             onLyricsGenerated(lyrics);
-            toast.success("Lyrics generated successfully!");
+            toast.success(`Lyrics generated successfully! Found ${lyrics.length} lines.`);
           } catch (error) {
             console.error("Failed to generate lyrics:", error);
-            toast.error("Failed to generate lyrics. You can add them manually.");
+            
+            // Show detailed error message to user
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            toast.error(`Lyrics generation failed: ${errorMessage}`, {
+              description: "You can still add lyrics manually using the editor below.",
+              duration: 8000,
+            });
+            
+            // Still call onLyricsGenerated with empty array to show the editor
+            onLyricsGenerated([]);
           }
         }
       } else {

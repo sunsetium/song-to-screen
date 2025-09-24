@@ -10,32 +10,55 @@ export class LyricsGenerator {
     
     this.isLoading = true;
     try {
+      console.log("Initializing Whisper model with WebGPU...");
       this.transcriber = await pipeline(
         "automatic-speech-recognition",
-        "onnx-community/whisper-tiny.en",
-        { device: "webgpu" }
+        "onnx-community/whisper-base.en",
+        { 
+          device: "webgpu",
+          dtype: "fp32"
+        }
       );
+      console.log("Whisper model initialized successfully with WebGPU");
     } catch (error) {
-      // Fallback to CPU if WebGPU fails
-      this.transcriber = await pipeline(
-        "automatic-speech-recognition",
-        "onnx-community/whisper-tiny.en"
-      );
+      console.warn("WebGPU failed, falling back to CPU:", error);
+      try {
+        this.transcriber = await pipeline(
+          "automatic-speech-recognition",
+          "onnx-community/whisper-base.en",
+          { 
+            device: "cpu",
+            dtype: "fp32"
+          }
+        );
+        console.log("Whisper model initialized successfully with CPU");
+      } catch (cpuError) {
+        console.error("Failed to initialize Whisper model:", cpuError);
+        throw new Error(`Failed to initialize speech recognition: ${cpuError.message}`);
+      }
     }
     this.isLoading = false;
   }
 
   async generateLyrics(audioFile: File, wordLevel: boolean = true): Promise<LyricLine[]> {
+    console.log("Starting lyrics generation for:", audioFile.name);
     await this.initialize();
     
     const audioUrl = URL.createObjectURL(audioFile);
     
     try {
-      const result = await this.transcriber(audioUrl, {
+      console.log("Transcribing audio with settings:", {
         return_timestamps: wordLevel ? "word" : "segment",
         chunk_length_s: 10,
       });
       
+      const result = await this.transcriber(audioUrl, {
+        return_timestamps: wordLevel ? "word" : "segment",
+        chunk_length_s: 10,
+        force_full_sequences: false,
+      });
+      
+      console.log("Transcription result:", result);
       URL.revokeObjectURL(audioUrl);
       
       // Process the result to create LyricLine objects
@@ -122,10 +145,25 @@ export class LyricsGenerator {
         }
       }
       
-      return lyrics.filter(lyric => lyric.text.length > 0);
+      const filteredLyrics = lyrics.filter(lyric => lyric.text.length > 0);
+      console.log(`Successfully generated ${filteredLyrics.length} lyric lines`);
+      return filteredLyrics;
     } catch (error) {
       console.error("Error generating lyrics:", error);
-      throw new Error("Failed to generate lyrics from audio");
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to generate lyrics from audio";
+      if (error.message && error.message.includes("cross attentions")) {
+        errorMessage = "The AI model doesn't support word-level timestamps. Please try again or use manual lyrics input.";
+      } else if (error.message && error.message.includes("WebGPU")) {
+        errorMessage = "Graphics acceleration failed. Please try again - the system will use CPU processing.";
+      } else if (error.message && error.message.includes("network")) {
+        errorMessage = "Network error while loading the AI model. Please check your connection and try again.";
+      } else if (error.message) {
+        errorMessage = `Speech recognition error: ${error.message}`;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 }
