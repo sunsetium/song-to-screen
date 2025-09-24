@@ -4,22 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LyricLine, LyricWord } from "@/types/lyrics";
 
-export interface LyricWord {
-  word: string;
-  startTime: number;
-  endTime: number;
-}
-
-export interface LyricLine {
-  id: string;
-  text: string;
-  startTime: number;
-  endTime: number;
-  words?: LyricWord[];
-}
-
-interface LyricsEditorProps {
+export interface LyricsEditorProps {
   lyrics: LyricLine[];
   onLyricsChange: (lyrics: LyricLine[]) => void;
   currentTime: number;

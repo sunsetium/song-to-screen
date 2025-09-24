@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExportModal } from "./ExportModal";
-import { LyricLine } from "./LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 import { Download, Video, Palette } from "lucide-react";
 
 interface ExportSectionProps {

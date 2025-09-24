@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { AudioUploader } from "@/components/AudioUploader";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { LyricsEditor, LyricLine } from "@/components/LyricsEditor";
+import { LyricsEditor } from "@/components/LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 import { LyricsPreview } from "@/components/LyricsPreview";
 import { ExportSection } from "@/components/ExportSection";
 import { MetadataExport } from "@/components/MetadataExport";

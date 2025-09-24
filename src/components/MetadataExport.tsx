@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { LyricLine } from "@/components/LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 import { exportLyricsAsLRC, exportLyricsAsJSON } from "@/services/lyricsGenerator";
 import { Download, FileText, Database } from "lucide-react";
 import { toast } from "sonner";

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { VideoExporter, ExportSettings } from "@/services/videoExporter";
-import { LyricLine } from "./LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 import { toast } from "sonner";
 import { Download, Palette, Type, Monitor } from "lucide-react";
 

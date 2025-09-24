@@ -1,6 +1,6 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
-import { LyricLine } from "@/components/LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 
 export interface ExportSettings {
   backgroundColor: string;

@@ -1,6 +1,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { LyricLine } from "@/components/LyricsEditor";
+import { LyricLine } from "@/types/lyrics";
 import { Music } from "lucide-react";
 
 interface LyricsPreviewProps {

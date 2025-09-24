@@ -1,7 +1,5 @@
 import { pipeline } from "@huggingface/transformers";
-import { LyricLine, LyricWord } from "@/components/LyricsEditor";
-
-export type { LyricLine, LyricWord };
+import { LyricLine, LyricWord } from "@/types/lyrics";
 
 export class LyricsGenerator {
   private transcriber: any = null;
