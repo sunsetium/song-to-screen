@@ -17,7 +17,7 @@ export class LyricsGenerator {
         "automatic-speech-recognition",
         "onnx-community/whisper-base.en",
         { 
-          device: "cpu", // Start with CPU to avoid WebGPU issues
+          device: "wasm", // Use WASM as it's more stable than WebGPU
           dtype: "fp32"
         }
       );
