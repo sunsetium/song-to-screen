@@ -10,54 +10,59 @@ export class LyricsGenerator {
     
     this.isLoading = true;
     try {
-      console.log("Initializing Whisper model with WebGPU...");
-      this.transcriber = await pipeline(
+      console.log("Initializing Whisper model...");
+      
+      // Add timeout to prevent hanging
+      const initPromise = pipeline(
         "automatic-speech-recognition",
         "onnx-community/whisper-base.en",
         { 
-          device: "webgpu",
+          device: "cpu", // Start with CPU to avoid WebGPU issues
           dtype: "fp32"
         }
       );
-      console.log("Whisper model initialized successfully with WebGPU");
+      
+      // Set a timeout to prevent indefinite hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Model initialization timeout")), 60000); // 60 second timeout
+      });
+      
+      this.transcriber = await Promise.race([initPromise, timeoutPromise]);
+      console.log("Whisper model initialized successfully");
     } catch (error) {
-      console.warn("WebGPU failed, falling back to CPU:", error);
-      try {
-        this.transcriber = await pipeline(
-          "automatic-speech-recognition",
-          "onnx-community/whisper-base.en",
-          { 
-            device: "cpu",
-            dtype: "fp32"
-          }
-        );
-        console.log("Whisper model initialized successfully with CPU");
-      } catch (cpuError) {
-        console.error("Failed to initialize Whisper model:", cpuError);
-        throw new Error(`Failed to initialize speech recognition: ${cpuError.message}`);
-      }
+      console.error("Failed to initialize Whisper model:", error);
+      this.isLoading = false;
+      throw new Error(`Failed to initialize speech recognition: ${error.message}`);
     }
     this.isLoading = false;
   }
 
   async generateLyrics(audioFile: File, wordLevel: boolean = true): Promise<LyricLine[]> {
     console.log("Starting lyrics generation for:", audioFile.name);
-    await this.initialize();
-    
-    const audioUrl = URL.createObjectURL(audioFile);
     
     try {
+      await this.initialize();
+      console.log("Model initialized, starting transcription...");
+      
+      const audioUrl = URL.createObjectURL(audioFile);
+      
       console.log("Transcribing audio with settings:", {
         return_timestamps: wordLevel ? "word" : "segment",
         chunk_length_s: 10,
       });
       
-      const result = await this.transcriber(audioUrl, {
+      // Add timeout for transcription to prevent hanging
+      const transcriptionPromise = this.transcriber(audioUrl, {
         return_timestamps: wordLevel ? "word" : "segment",
         chunk_length_s: 10,
         force_full_sequences: false,
       });
       
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transcription timeout - audio processing took too long")), 120000); // 2 minute timeout
+      });
+      
+      const result = await Promise.race([transcriptionPromise, timeoutPromise]);
       console.log("Transcription result:", result);
       URL.revokeObjectURL(audioUrl);
       
